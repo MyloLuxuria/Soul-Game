@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+    table, th, td {
+        border: 1px solid black;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 5px;
+    }
+    th {
+        background-color: #292925;
+        color: white;
+    }
+    table tr:not(:first-child){
+        cursor: pointer;transition: all .1s ease-in-out;
+    }
+    .selected{background-color: rgb(255, 251, 2)};
+    </style>
+</head>
+
+<body>
+    <table style="width:25%" id="table">
+        <tr>
+            <th>Item</th>
+            <th>Price</th>
+            <th>Stock</th>
+        </tr>
+        <tr>
+            <td>Wood</td>
+            <td>100</td>
+            <td>273</td>
+        </tr>
+        <tr>
+            <td>Stone</td>
+            <td>200</td>
+            <td>2</td>
+        </tr>
+    </table>
+
+    <button onclick="buy()">Buy</button>
+    <button onclick="sell()">Sell</button>
+    <input type="number" id="amount" value="amount to buy/sell...">
+    <br>
+    Money: £<p id="money"></p>
+    <br>
+    Inventory: <p id="inventory"></p>
+    <p id="clock"></p>
+</body>
+
+<script>
+    var money = 2000;
+    var items = ["Wood","Stone"];
+    var inventory = [0,0];
+
+    var table = document.getElementById("table"),rIndex;
+    
+    var rIndex;
+    for(var i = 1; i < table.rows.length; i++)
+    {
+        table.rows[i].onclick = function()
+        {
+            if(typeof rIndex !== "undefined"){
+                table.rows[rIndex].classList.toggle("selected");
+            }
+            rIndex = this.rowIndex;
+            table.rows[rIndex].classList.toggle("selected");
+            item = this.cells[0].innerHTML;
+            price = this.cells[1].innerHTML;
+            stock = this.cells[2].innerHTML;
+            console.log(rIndex,item,price,stock);
+        };
+    }
+    while(1){
+        setTimeout(currentTime(),100);
+    }
+    function removeItemOnce(arr, value) {
+        var index = arr.indexOf(value);
+        if (index > -1) {
+            arr.splice(index, 1);
+        }
+        return arr;
+    }
+    function buy(){
+        var amt = document.getElementById("amount").value;
+        if(money-(price*amt) >= 0 && stock >= amt){
+            inventory[items.indexOf(item)] = inventory[items.indexOf(item)] + parseInt(amt);
+            money = money - price*amt;
+            stock = stock - amt;
+            table.rows[rIndex].cells[2].innerHTML = stock;
+            document.getElementById("money").innerHTML = money;
+            show_inventory();
+        }
+    }
+    function sell(){
+        var amt = document.getElementById("amount").value;
+        if(inventory[items.indexOf(item)] > 0 && inventory[items.indexOf(item)] >= amt){
+            inventory[items.indexOf(item)] = inventory[items.indexOf(item)] - amt;
+            money = money + parseInt(price*amt);
+            stock = parseInt(stock) + parseInt(amt);
+            table.rows[rIndex].cells[2].innerHTML = stock;
+            document.getElementById("money").innerHTML = money;
+            show_inventory();
+        }
+    }
+    function show_inventory(){
+        document.getElementById("inventory").innerHTML = "";
+        var i;
+        for (i = 0; i < items.length; i++) {
+            if(inventory[i]>0){
+                if(inventory[i] == 1){
+                    document.getElementById("inventory").innerHTML = document.getElementById("inventory").innerHTML + "<br>" + items[i];
+                }else{
+                    document.getElementById("inventory").innerHTML = document.getElementById("inventory").innerHTML + "<br>" + items[i]+" x"+inventory[i];
+                }
+            }
+        }
+    }
+    function currentTime(){
+        var date = new Date();
+        var n = date.toLocaleString();
+        var m = date.getMilliseconds();
+        document.getElementById("clock").innerHTML = n+":"+m
+    }
+
+</script>
+
+</html>

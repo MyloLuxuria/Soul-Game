@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            background-color: #D9AFD9;
+            background-image: linear-gradient(0deg, #D9AFD9 0%, #97D9E1 100%);
+            background-repeat: no-repeat;
+            background-attachment: fixed; 
+            background-size: 100% 100%;
+            }
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 5px;
+        }
+        th {
+            background-color: #292925;
+            color: white;
+        }
+        table tr:not(:first-child){
+            cursor: pointer;transition: all .1s ease-in-out;
+        }
+        .selected{background-color: rgb(255, 251, 2)};
+    </style>
+</head>
+
+<body>
+        <button onclick="buy()">Buy</button>
+        <button onclick="sell()">Sell</button>
+        <input type="number" id="amount">
+        <table id="table">
+            <tr>
+                <th>Item</th>
+                <th>Price</th>
+                <th>Stock</th>
+            </tr>
+        </table>
+        
+        Money: £<span id="money"></span>
+        Power: <span id="power"></span>
+        <br>
+        Inventory: <p id="inventory"></p>
+    <p id="clock"></p>
+</body>
+
+<script>
+
+    dict = {
+"wood":      {"price":1.99,    "amount":0, "stock":1000, "base_price":150, "gradient":-1, "overall_time":1, "left_time":1, "random": 50},
+"stone":     {"price":2.50,    "amount":0, "stock":500,  "base_price":100, "gradient":-2, "overall_time":3, "left_time":3, "random": 50},
+"iron":      {"price":25.80,   "amount":0, "stock":100,  "base_price":200, "gradient":-3, "overall_time":2, "left_time":2, "random": 50},
+"gold":      {"price":100.25,  "amount":0, "stock":50,   "base_price":150, "gradient":-4, "overall_time":4, "left_time":4, "random": 50},
+"diamond":   {"price":1200.10, "amount":0, "stock":10,   "base_price":150, "gradient":-5, "overall_time":5, "left_time":5, "random": 50},
+"netherite": {"price":2500,    "amount":0, "stock":5,    "base_price":150, "gradient":-6, "overall_time":6, "left_time":6, "random": 50}
+};
+    var money = 100000;
+    document.getElementById("money").innerHTML = money
+
+    function check_power(){
+        var power = money;
+        for(var key in dict) {
+            var value = dict[key];
+            power = power + (dict[key]["price"] * dict[key]["amount"])
+        }
+        document.getElementById("power").innerHTML = Math.round(power);
+    }
+    check_power();
+
+    //Buy/Sell and inventory
+    function buy(){
+        var amt = document.getElementById("amount").value;
+        var price = dict[item]["price"]
+        if(money-(price*amt) >= 0 && dict[item]["stock"] >= amt){
+
+            dict[item]["amount"] = dict[item]["amount"] + parseInt(amt); //inventory
+            money = Math.round((money - (price*amt)) * 100)/100; //money and price
+            dict[item]["stock"] = dict[item]["stock"] - amt; //stock in economy
+            
+            document.getElementById("money").innerHTML = money;
+            updateTable();
+            show_inventory();
+        }
+    }
+    function sell(){
+        var amt = document.getElementById("amount").value;
+        var price = dict[item]["price"]
+        if(dict[item]["amount"] > 0 && dict[item]["amount"] >= amt){
+
+            dict[item]["amount"] = dict[item]["amount"] - amt; //inventory
+            money = Math.round((money + (price*amt)) * 100)/100; //money and price
+            dict[item]["stock"] = dict[item]["stock"] + parseInt(amt); //stock in economy
+
+            document.getElementById("money").innerHTML = money;
+            updateTable();
+            show_inventory();
+        }
+    }
+    function show_inventory(){
+        document.getElementById("inventory").innerHTML = "";
+        for (key in dict) {
+            if(dict[key]["amount"] > 0){
+                if(dict[key]["amount"] == 1){
+                    document.getElementById("inventory").innerHTML = document.getElementById("inventory").innerHTML + key + "<br>";
+                }else{
+                    document.getElementById("inventory").innerHTML = document.getElementById("inventory").innerHTML + key +" x"+ dict[key]["amount"] + "<br>";
+                }
+            }
+        }
+    }
+
+    //Table Dictionary
+    function deleteRows() {
+        var table = document.getElementById("table");
+        for(var key in dict) {
+            table.deleteRow(1);
+        }
+    }
+    function addRows() {
+        var table = document.getElementById("table");
+        for(var key in dict) {
+            var value = dict[key];
+            var price = dict[key]["price"]
+            var stock = dict[key]["stock"]
+            var row = table.insertRow(1);
+            var c1 = row.insertCell(0);
+            var c2 = row.insertCell(1);
+            var c3 = row.insertCell(2);
+            c1.innerHTML = key;
+            c2.innerHTML = price;
+            c3.innerHTML = stock;
+        }
+    }
+    function updateTable() {
+        deleteRows();
+        addRows();
+        highlightRows();
+        check_power();
+    }
+    var SavedRow;
+    var item;
+    function highlightRows(){
+        var table = document.getElementById("table"),rIndex;
+        for(var i = 1; i < table.rows.length; i++){
+            table.rows[i].classList.toggle("selected",false);
+            if(i == SavedRow){
+                table.rows[SavedRow].classList.toggle("selected",true);
+            }
+            table.rows[i].onclick = function(){
+                for(var i = 1; i < table.rows.length; i++){
+                    table.rows[i].classList.toggle("selected",false);
+                }
+                rIndex = this.rowIndex;
+                table.rows[rIndex].classList.toggle("selected",true);
+                SavedRow = rIndex;
+                item = this.cells[0].innerHTML;
+            };
+        }
+    }
+    addRows();
+    highlightRows();
+
+    //Clock
+    function currentTime() {
+        var d = new Date();
+        var h = updateTime(d.getUTCHours());
+        var m = updateTime(d.getUTCMinutes());
+        var s = updateTime(d.getUTCSeconds());
+        if(m==0 && s==0){
+            for(key in dict){
+                dict[key]["left_time"] = dict[key]["left_time"] - 1;
+                if(dict[key]["left_time"]==0){
+                    dict[key]["left_time"] = dict[key]["overall_time"];
+                    bf_price = (dict[key]["gradient"] * dict[key]["stock"]) + dict[key]["base_price"];
+                    r = Math.floor(Math.random() * (dict[key]["random"] - (dict[key]["random"]/-1) + 1)) + (dict[key]["random"]/1);
+                    dict[key]["price"] = (bf_price + r).toFixed(2);
+                    updateRows()
+                }
+            }
+        }
+        document.getElementById("clock").innerHTML = h+":"+m+":"+s+" UTC";
+        var t = setTimeout(function(){ currentTime() }, 1000);
+    }
+    function updateTime(k) {
+        if (k < 10) {
+  	        return "0" + k;
+        }
+        else {
+            return k;
+        }
+    }
+    currentTime();
+
+</script>
+
+</html>
